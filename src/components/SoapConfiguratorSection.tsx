@@ -1,52 +1,47 @@
 "use client";
 
 import { useState } from "react";
+import type { SoapFragrance, SoapVariation } from "@/types/catalog";
 
-const soapTypes = [
-    "Hydrating",
-    "Deep Cleansing",
-    "Gentle",
-    "Creamy",
-    "Foamy",
-    "Exfoliating",
-    "Long Lasting",
-    "Fresh",
-    "Relaxing",
-];
+type SoapConfiguratorSectionProps = {
+    soapVariations: SoapVariation[];
+    soapFragrances: SoapFragrance[];
+};
 
-const aromas = [
-    "Rose",
-    "Caramel",
-    "Vanilla",
-    "Lavender",
-    "Lime",
-    "Mint",
-    "Honey",
-    "Coconut",
-    "Orange",
-    "Eucalyptus",
-];
-
-export function SoapConfiguratorSection() {
-    const [selectedSoapType, setSelectedSoapType] = useState("");
-    const [selectedAromas, setSelectedAromas] = useState<string[]>([]);
+export function SoapConfiguratorSection({
+                                            soapVariations,
+                                            soapFragrances,
+                                        }: SoapConfiguratorSectionProps) {
+    const [selectedSoapVariationId, setSelectedSoapVariationId] = useState("");
+    const [selectedFragranceIds, setSelectedFragranceIds] = useState<number[]>([]);
     const [initials, setInitials] = useState("");
 
-    const canAddToCart = selectedSoapType && selectedAromas.length > 0;
+    const selectedSoapVariation = soapVariations.find(
+        (variation) => variation.id === Number(selectedSoapVariationId),
+    );
 
-    function toggleAroma(aroma: string) {
-        const isSelected = selectedAromas.includes(aroma);
+    const selectedFragrances = soapFragrances.filter((fragrance) =>
+        selectedFragranceIds.includes(fragrance.id),
+    );
+
+    const canAddToCart =
+        selectedSoapVariationId !== "" && selectedFragranceIds.length > 0;
+
+    function toggleFragrance(fragranceId: number) {
+        const isSelected = selectedFragranceIds.includes(fragranceId);
 
         if (isSelected) {
-            setSelectedAromas(selectedAromas.filter((item) => item !== aroma));
+            setSelectedFragranceIds(
+                selectedFragranceIds.filter((id) => id !== fragranceId),
+            );
             return;
         }
 
-        if (selectedAromas.length >= 2) {
+        if (selectedFragranceIds.length >= 3) {
             return;
         }
 
-        setSelectedAromas([...selectedAromas, aroma]);
+        setSelectedFragranceIds([...selectedFragranceIds, fragranceId]);
     }
 
     function handleAddToCart() {
@@ -55,9 +50,11 @@ export function SoapConfiguratorSection() {
         }
 
         alert(
-            `Custom soap added:\nType: ${selectedSoapType}\nAromas: ${selectedAromas.join(
-                " + ",
-            )}\nInitials: ${initials || "None"}`,
+            `Custom soap added:\nType: ${
+                selectedSoapVariation?.name
+            }\nAromas: ${selectedFragrances
+                .map((fragrance) => fragrance.name)
+                .join(" + ")}\nInitials: ${initials || "None"}`,
         );
     }
 
@@ -81,15 +78,17 @@ export function SoapConfiguratorSection() {
                         <label className="text-sm font-semibold">Soap type</label>
 
                         <select
-                            value={selectedSoapType}
-                            onChange={(event) => setSelectedSoapType(event.target.value)}
+                            value={selectedSoapVariationId}
+                            onChange={(event) =>
+                                setSelectedSoapVariationId(event.target.value)
+                            }
                             className="mt-2 w-full rounded-xl border bg-white px-4 py-3 outline-none focus:border-stone-900"
                         >
                             <option value="">Choose type</option>
 
-                            {soapTypes.map((type) => (
-                                <option key={type} value={type}>
-                                    {type}
+                            {soapVariations.map((variation) => (
+                                <option key={variation.id} value={variation.id}>
+                                    {variation.name}
                                 </option>
                             ))}
                         </select>
@@ -99,18 +98,18 @@ export function SoapConfiguratorSection() {
                         <label className="text-sm font-semibold">
                             Aromas{" "}
                             <span className="font-normal text-stone-500">
-                ({selectedAromas.length}/2)
+                ({selectedFragranceIds.length}/3)
               </span>
                         </label>
 
                         <div className="mt-2 grid grid-cols-2 gap-2">
-                            {aromas.map((aroma) => {
-                                const checked = selectedAromas.includes(aroma);
-                                const disabled = !checked && selectedAromas.length >= 2;
+                            {soapFragrances.map((fragrance) => {
+                                const checked = selectedFragranceIds.includes(fragrance.id);
+                                const disabled = !checked && selectedFragranceIds.length >= 3;
 
                                 return (
                                     <label
-                                        key={aroma}
+                                        key={fragrance.id}
                                         className={`flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm ${
                                             disabled
                                                 ? "cursor-not-allowed opacity-40"
@@ -121,9 +120,9 @@ export function SoapConfiguratorSection() {
                                             type="checkbox"
                                             checked={checked}
                                             disabled={disabled}
-                                            onChange={() => toggleAroma(aroma)}
+                                            onChange={() => toggleFragrance(fragrance.id)}
                                         />
-                                        {aroma}
+                                        {fragrance.name}
                                     </label>
                                 );
                             })}
@@ -150,13 +149,15 @@ export function SoapConfiguratorSection() {
                             <p className="font-semibold">Your soap</p>
 
                             <p className="mt-2 text-stone-600">
-                                Type: {selectedSoapType || "Not selected"}
+                                Type: {selectedSoapVariation?.name || "Not selected"}
                             </p>
 
                             <p className="text-stone-600">
                                 Aromas:{" "}
-                                {selectedAromas.length > 0
-                                    ? selectedAromas.join(" + ")
+                                {selectedFragrances.length > 0
+                                    ? selectedFragrances
+                                        .map((fragrance) => fragrance.name)
+                                        .join(" + ")
                                     : "Not selected"}
                             </p>
 
